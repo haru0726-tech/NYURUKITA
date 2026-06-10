@@ -3,4 +3,18 @@
 	let { children } = $props();
 </script>
 
-{@render children()}
+<!-- Fixed full-screen video background of dolphins swimming -->
+<div class="video-background-container">
+	<div class="video-overlay"></div>
+	<iframe
+		src="https://www.youtube.com/embed/BpXlJnRw3OY?autoplay=1&mute=1&loop=1&playlist=BpXlJnRw3OY&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&enablejsapi=1"
+		title="Dolphins Swimming Background"
+		frameborder="0"
+		allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+		allowfullscreen
+	></iframe>
+</div>
+
+<div class="content-wrapper">
+	{@render children()}
+</div>
