@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYURUKITA - Green Hell Racer</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- PyScript Core -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    <style>
+        /* CSS Reset & Variables */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        
+        :root {
+            --bg-darker: #050805;
+            --bg-dark: #0b110b;
+            --bg-card: rgba(18, 28, 18, 0.75);
+            --border-glow: rgba(74, 222, 128, 0.15);
+            --primary: #4ade80;
+            --primary-glow: rgba(74, 222, 128, 0.4);
+            --warning: #ef4444;
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            background-color: var(--bg-darker);
+            color: var(--text-light);
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 360px;
+            background-color: var(--bg-dark);
+            border-right: 1px solid var(--border-glow);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-container {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .logo-main {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Minimap Layout */
+        .minimap-container {
+            align-items: center;
+            padding: 10px;
+        }
+        #minimapCanvas {
+            border-radius: 8px;
+            background: #090e09;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Leaderboard Styling */
+        .leaderboard-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+        }
+
+        .leaderboard-item.rank-1 { border-left-color: #fbbf24; color: #fbbf24; font-weight: 700; }
+        .leaderboard-item.rank-2 { border-left-color: #cbd5e1; color: #cbd5e1; }
+        .leaderboard-item.rank-3 { border-left-color: #b45309; color: #f59e0b; }
+
+        .leaderboard-empty {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 10px 0;
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+            align-self: flex-end;
+        }
+
+        .btn-clear:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: var(--warning);
+        }
+
+        /* Controls card */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .btn-action {
+            background: rgba(74, 222, 128, 0.08);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            color: var(--text-light);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+        }
+
+        .btn-action.muted {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-action.muted:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--warning);
+        }
+
+        .key-legend {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            padding: 6px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+        }
+
+        /* Game Area styling */
+        .game-container {
+            flex: 1;
+            position: relative;
+            background-color: #1a4314; /* default grass color during load */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Telemetry HUD layout overlay */
+        .hud-overlay {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: rgba(10, 15, 10, 0.85);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            display: flex;
+            gap: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+        }
+
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hud-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .hud-value .big {
+            font-size: 38px;
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .hud-value .unit {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .gear-indicator {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        /* RPM Bar Styling */
+        .rpm-bar-container {
+            width: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .rpm-track {
+            height: 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .rpm-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4ade80 70%, #fbbf24 85%, #ef4444 100%);
+            transition: width 0.03s linear;
+        }
+
+        .rpm-fill.redline {
+            animation: redline-flash 0.08s infinite alternate;
+        }
+
+        @keyframes redline-flash {
+            0% { background-color: #ef4444; filter: brightness(1.2); }
+            100% { background-color: #7f1d1d; filter: brightness(0.8); }
+        }
+
+        /* SVG Graph Panel */
+        .elevation-panel {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            width: 320px;
+        }
+
+        .elevation-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .elevation-chart {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        /* Interactive Steering Wheel HUD container */
+        .steering-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+        }
+
+        #hud-wheel {
+            transition: transform 0.05s linear;
+            transform-origin: center;
+        }
+
+        /* Full Screen Alerts & Overlays */
+        .alert-banner {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            padding: 12px 36px;
+            border-radius: 10px;
+            z-index: 5;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        #green-hell-warning {
+            background: rgba(239, 68, 68, 0.85);
+            border: 2px solid var(--warning);
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            animation: pulse-border 1s infinite alternate;
+        }
+
+        #notification-banner {
+            background: rgba(74, 222, 128, 0.9);
+            border: 2px solid var(--primary);
+            color: #050805;
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.4);
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+            100% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.8); }
+        }
+
+        /* Screen Overlays (Loading & Start) */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #0e160e 0%, #040604 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .overlay-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 44px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary-glow);
+            text-align: center;
+        }
+
+        .overlay-desc {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 480px;
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .btn-start {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--bg-darker);
+            background: var(--primary);
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 25px var(--primary-glow);
+            transition: all 0.3s ease;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px var(--primary);
+            background: #ffffff;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 222, 128, 0.15);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .trivia-box {
+            font-size: 13px;
+            color: var(--text-muted);
+            border-left: 3px solid var(--primary);
+            padding-left: 12px;
+            max-width: 380px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo-main">NYURUKITA</div>
+            <div class="logo-sub">Green Hell Racer</div>
+        </div>
+
+        <!-- Lap Times Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>LAP TELEMETRY</span>
+                <span id="checkpoint-indicator" style="font-size: 10px; color: var(--text-muted);">🏁 SPAWN</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--text-muted)">Current Lap:</span>
+                    <span id="lap-val" style="font-family: 'Orbitron', sans-serif; font-weight: 700; color: #ffffff;">00:00.000</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--text-muted)">Last Lap:</span>
+                    <span id="last-lap-val" style="font-family: 'Orbitron', sans-serif; color: var(--text-muted);">--:--.---</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--primary);">Best Lap:</span>
+                    <span id="best-lap-val" style="font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--primary);">--:--.---</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimap Card -->
+        <div class="card minimap-container">
+            <div class="card-title" style="width: 100%; margin-bottom: 8px;">TRACK MAP (20.48 KM)</div>
+            <canvas id="minimapCanvas" width="180" height="180"></canvas>
+        </div>
+
+        <!-- Best Times Leaderboard -->
+        <div class="card">
+            <div class="card-title">
+                <span>LOCAL LEADERBOARD</span>
+                <button class="btn-clear" onclick="clearBestTimes()">Reset Logs</button>
+            </div>
+            <ul id="leaderboard" class="leaderboard-list">
+                <li class="leaderboard-empty">No records stored</li>
+            </ul>
+        </div>
+
+        <!-- Controls & Sound Settings -->
+        <div class="card">
+            <div class="card-title">SETTINGS & CONTROLS</div>
+            <div class="controls-grid">
+                <button id="camera-btn" class="btn-action" onclick="toggleCameraView()">
+                    🎥 View: North Up
+                </button>
+                <button id="mute-btn" class="btn-action" onclick="toggleMute()">
+                    🔇 Mute
+                </button>
+            </div>
+            <div class="key-legend">
+                <strong>[Driving]</strong> ▲▼◀▶ or W/A/S/D<br>
+                <strong>[Drift / Handbrake]</strong> Space Bar<br>
+                <strong>[Reset to Grid]</strong> R Key<br>
+                <strong>[Change Camera]</strong> C Key
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="game-container">
+        <!-- Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Warnings & Announcements -->
+        <div id="green-hell-warning" class="alert-banner">GREEN HELL!</div>
+        <div id="notification-banner" class="alert-banner">LAP COMPLETE!</div>
+
+        <!-- HUD telemetry overlay -->
+        <div class="hud-overlay">
+            <!-- Left Side: Speed / Gears / RPM -->
+            <div class="hud-panel">
+                <div class="hud-stat">
+                    <span class="hud-label">Speed</span>
+                    <div class="hud-value">
+                        <span id="speed-val" class="big">0</span>
+                        <span class="unit">km/h</span>
+                    </div>
+                </div>
+
+                <div class="hud-stat">
+                    <span class="hud-label">Gear</span>
+                    <div id="gear-val" class="gear-indicator">N</div>
+                </div>
+
+                <div class="hud-stat">
+                    <span class="hud-label">Engine RPM</span>
+                    <div class="rpm-bar-container" style="margin-top: 6px;">
+                        <div class="rpm-track">
+                            <div id="rpm-fill" class="rpm-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center-Right: Interactive Steering Wheel -->
+            <div class="hud-panel steering-panel">
+                <svg id="hud-wheel" width="56" height="56" viewBox="0 0 100 100">
+                    <!-- Outer Rim -->
+                    <circle cx="50" cy="50" r="44" stroke="#4ade80" stroke-width="8" fill="none" />
+                    <!-- Inner Hub -->
+                    <circle cx="50" cy="50" r="12" fill="#4ade80" />
+                    <!-- Spokes -->
+                    <line x1="6" y1="50" x2="38" y2="50" stroke="#4ade80" stroke-width="8" />
+                    <line x1="62" y1="50" x2="94" y2="50" stroke="#4ade80" stroke-width="8" />
+                    <line x1="50" y1="62" x2="50" y2="92" stroke="#4ade80" stroke-width="8" />
+                    <!-- Center Logo Accent -->
+                    <circle cx="50" cy="50" r="6" fill="#000" />
+                    <!-- Top alignment stripe -->
+                    <rect x="47" y="6" width="6" height="8" fill="#ef4444" />
+                </svg>
+            </div>
+
+            <!-- Right Side: Elevation Profiler -->
+            <div class="hud-panel elevation-panel">
+                <div class="elevation-row">
+                    <div class="hud-stat">
+                        <span class="hud-label">Altitude</span>
+                        <span id="altitude-val" style="font-family:'Orbitron',sans-serif; font-size:16px; font-weight:700;">620 m</span>
+                    </div>
+                    <div class="hud-stat" style="text-align: right;">
+                        <span class="hud-label">Gradient</span>
+                        <span id="slope-val" style="font-family:'Orbitron',sans-serif; font-size:16px; font-weight:700; color:var(--text-muted);">0% Flat</span>
+                    </div>
+                </div>
+                <div class="elevation-chart">
+                    <svg width="100%" height="100%" viewBox="0 0 250 50" preserveAspectRatio="none">
+                        <!-- Background Grid Lines -->
+                        <line x1="0" y1="10" x2="250" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <line x1="0" y1="25" x2="250" y2="25" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <line x1="0" y1="40" x2="250" y2="40" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        
+                        <!-- Elevation Line Spline (drawn dynamically by JS/Python) -->
+                        <path id="elevation-path" d="" fill="none" stroke="rgba(74, 222, 128, 0.4)" stroke-width="2" />
+                        
+                        <!-- Live tracker dot -->
+                        <circle id="elevation-marker" cx="0" cy="25" r="4" fill="#ef4444" style="filter: drop-shadow(0 0 2px #ef4444);" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- OVERLAY 1: Loading Python Environment -->
+        <div id="loading-screen" class="overlay">
+            <div class="overlay-title">LOADING PYENVIRONMENT</div>
+            <div class="spinner"></div>
+            <div class="overlay-desc">Compiling mathematical splines and configuring vehicle physics engine...</div>
+            <div class="trivia-box">
+                "ニュルブルクリンク北コース（ノルトシュライフェ）は『グリーン・ヘル（緑の地獄）』と称され、全長約20.8km、高低差300m、150を超えるコーナーを持つ世界一過酷なサーキットです。"
+            </div>
+        </div>
+
+        <!-- OVERLAY 2: Start Game (Audio Initialization Trigger) -->
+        <div id="start-screen" class="overlay" style="display: none;">
+            <div class="overlay-title">GREEN HELL RACER</div>
+            <div class="overlay-desc">
+                本格的なサウンドエンジン（Web Audio API）と慣性ドリフト物理を搭載した、PyScriptによる「にゅるきた」2Dレースゲームへようこそ！
+            </div>
+            <button class="btn-start" onclick="startGame()">START ENGINE</button>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                ※ 音声が流れますので音量にご注意ください
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Audio API Synthesizer (SoundManager) -->
+    <script>
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.engineOsc1 = null;
+                this.engineOsc2 = null;
+                this.engineFilter = null;
+                this.engineGain = null;
+                
+                this.noiseNode = null;
+                this.noiseFilter = null;
+                this.noiseGain = null;
+                
+                this.screechOsc = null;
+                this.screechGain = null;
+                
+                this.initialized = false;
+                this.muted = false;
+            }
+            
+            init() {
+                if (this.initialized) return;
+                
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                
+                // 1. Engine sound synthesis (two oscillators for rich harmonic resonance)
+                this.engineOsc1 = this.ctx.createOscillator();
+                this.engineOsc2 = this.ctx.createOscillator();
+                this.engineFilter = this.ctx.createBiquadFilter();
+                this.engineGain = this.ctx.createGain();
+                
+                this.engineOsc1.type = 'sawtooth';
+                this.engineOsc2.type = 'triangle';
+                this.engineFilter.type = 'lowpass';
+                
+                // Route engine oscillators
+                this.engineOsc1.connect(this.engineFilter);
+                this.engineOsc2.connect(this.engineFilter);
+                this.engineFilter.connect(this.engineGain);
+                this.engineGain.connect(this.ctx.destination);
+                
+                this.engineGain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                this.engineFilter.frequency.setValueAtTime(250, this.ctx.currentTime);
+                
+                this.engineOsc1.start(0);
+                this.engineOsc2.start(0);
+                
+                // 2. Offroad / Green Hell rumble noise buffer (White noise)
+                const bufferSize = this.ctx.sampleRate * 2;
+                const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                this.noiseNode = this.ctx.createBufferSource();
+                this.noiseNode.buffer = noiseBuffer;
+                this.noiseNode.loop = true;
+                
+                this.noiseFilter = this.ctx.createBiquadFilter();
+                this.noiseFilter.type = 'bandpass';
+                this.noiseFilter.frequency.setValueAtTime(140, this.ctx.currentTime);
+                this.noiseFilter.Q.setValueAtTime(1.5, this.ctx.currentTime);
+                
+                this.noiseGain = this.ctx.createGain();
+                this.noiseGain.gain.setValueAtTime(0.0, this.ctx.currentTime);
+                
+                this.noiseNode.connect(this.noiseFilter);
+                this.noiseFilter.connect(this.noiseGain);
+                this.noiseGain.connect(this.ctx.destination);
+                this.noiseNode.start(0);
+                
+                // 3. Tire screeching sound (high pitch sine)
+                this.screechOsc = this.ctx.createOscillator();
+                this.screechGain = this.ctx.createGain();
+                
+                this.screechOsc.type = 'sine';
+                this.screechOsc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                this.screechGain.gain.setValueAtTime(0.0, this.ctx.currentTime);
+                
+                this.screechOsc.connect(this.screechGain);
+                this.screechGain.connect(this.ctx.destination);
+                this.screechOsc.start(0);
+                
+                this.initialized = true;
+            }
+            
+            update(rpm, throttle, isOffroad, isScreeching) {
+                if (!this.initialized || this.muted) return;
+                
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                
+                // Calculate base engine frequencies
+                const freq1 = 28 + (rpm / 8000.0) * 110;
+                const freq2 = freq1 * 1.5;
+                
+                this.engineOsc1.frequency.setTargetAtTime(freq1, this.ctx.currentTime, 0.05);
+                this.engineOsc2.frequency.setTargetAtTime(freq2, this.ctx.currentTime, 0.05);
+                
+                // Low-pass filter follows RPM and throttle to make sound "brighter" under load
+                const cutoff = 200 + (rpm / 8000.0) * 350 + (throttle * 150);
+                this.engineFilter.frequency.setTargetAtTime(cutoff, this.ctx.currentTime, 0.05);
+                
+                // Volume adjustments
+                const engineVol = 0.08 + (throttle * 0.08) + (rpm / 8000.0) * 0.06;
+                this.engineGain.gain.setTargetAtTime(engineVol, this.ctx.currentTime, 0.05);
+                
+                // Grass rumble volume
+                const noiseVol = isOffroad ? 0.35 : 0.0;
+                this.noiseGain.gain.setTargetAtTime(noiseVol, this.ctx.currentTime, 0.08);
+                
+                // Screech volume
+                const screechVol = isScreeching ? 0.06 : 0.0;
+                this.screechGain.gain.setTargetAtTime(screechVol, this.ctx.currentTime, 0.04);
+            }
+            
+            toggleMute() {
+                this.muted = !this.muted;
+                if (this.initialized) {
+                    if (this.muted) {
+                        this.ctx.suspend();
+                    } else {
+                        this.ctx.resume();
+                    }
+                }
+                return this.muted;
+            }
+        }
+
+        window.soundManager = new SoundManager();
+
+        // JS Global trigger bindings
+        window.cameraMode = "CAR_UP"; // CAR_UP or NORTH_UP
+        window.gameStarted = false;
+        window.trackPath = null;
+        
+        function startGame() {
+            window.soundManager.init();
+            document.getElementById("start-screen").style.display = "none";
+            window.gameStarted = true;
+            // Notify Python side via registered callback
+            if (window.pySetGameStarted) {
+                window.pySetGameStarted(true);
+            }
+        }
+
+        function toggleMute() {
+            const isMuted = window.soundManager.toggleMute();
+            const btn = document.getElementById("mute-btn");
+            if (isMuted) {
+                btn.innerHTML = "🔊 Unmute";
+                btn.classList.add("muted");
+            } else {
+                btn.innerHTML = "🔇 Mute";
+                btn.classList.remove("muted");
+            }
+        }
+
+        function toggleCameraView() {
+            const btn = document.getElementById("camera-btn");
+            if (window.cameraMode === "CAR_UP") {
+                window.cameraMode = "NORTH_UP";
+                btn.innerHTML = "🎥 View: North Up";
+            } else {
+                window.cameraMode = "CAR_UP";
+                btn.innerHTML = "🎥 View: Car Up";
+            }
+            // Notify Python side
+            if (window.pySetCameraMode) {
+                window.pySetCameraMode(window.cameraMode);
+            }
+        }
+
+        // Bridge to create Path2D natively from Python coordinates to maximize draw speeds
+        window.createTrackPath = function(points) {
+            const path = new Path2D();
+            if (points.length === 0) return path;
+            path.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) {
+                path.lineTo(points[i][0], points[i][1]);
+            }
+            path.closePath();
+            window.trackPath = path;
+            // Notify Python side that path is ready
+            if (window.pySetTrackPath) {
+                window.pySetTrackPath(path);
+            }
+        };
+
+        // Local rankings display helper
+        window.displayLeaderboard = function(rankings) {
+            const list = document.getElementById("leaderboard");
+            list.innerHTML = "";
+            if (!rankings || rankings.length === 0) {
+                list.innerHTML = `<li class="leaderboard-empty">No records stored</li>`;
+                return;
+            }
+            rankings.forEach((sec, idx) => {
+                const item = document.createElement("li");
+                item.className = `leaderboard-item rank-${idx + 1}`;
+                
+                const minutes = Math.floor(sec / 60);
+                const seconds = Math.floor(sec % 60);
+                const millis = Math.floor((sec % 1) * 1000);
+                
+                const fTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+                
+                let medal = `${idx + 1}.`;
+                if (idx === 0) medal = "🥇";
+                if (idx === 1) medal = "🥈";
+                if (idx === 2) medal = "🥉";
+                
+                item.innerHTML = `<span>${medal} LAP</span><span>${fTime}</span>`;
+                list.appendChild(item);
+            });
+        };
+
+        function clearBestTimes() {
+            if (confirm("ベストタイムを消去しますか？")) {
+                localStorage.removeItem("nyurukita_rankings");
+                window.displayLeaderboard([]);
+                // Trigger Python rankings update (handled dynamically since Python reads from localStorage directly)
+                if (window.pythonResetRankings) {
+                    window.pythonResetRankings();
+                }
+            }
+        }
+    </script>
+
+    <!-- PyScript Game Engine -->
+    <script type="py">
+import math
+import random
+import time
+from js import window, document, localStorage, createTrackPath, displayLeaderboard
+from pyodide.ffi import create_proxy
+
+# 1. Coordinate Definitions of Nürburgring Nordschleife (Nyurukita)
+# Representing actual track curvature shapes and elevations (z, in meters)
+control_points = [
+    (1000, 4500, 620), # Start/Finish line
+    (1100, 4300, 615), # Hatzenbach S-curves entrance
+    (1150, 4000, 610), # Hatzenbach S-curves
+    (1300, 3800, 600), # Hocheichen
+    (1500, 3700, 592), # Quiddelbacher Höhe
+    (1700, 3500, 595), # Flugplatz
+    (2000, 3300, 580), # Schwedenkreuz
+    (2300, 3200, 540), # Aremberg
+    (2350, 2900, 500), # Fuchsröhre descent
+    (2200, 2600, 475), # Fuchsröhre dip (low altitude)
+    (2100, 2400, 510), # Adenauer Forst steep climb
+    (2000, 2200, 532), # Adenauer Forst chicane
+    (2150, 2000, 510), # Metzgesfeld
+    (2300, 1800, 485), # Kallenhard
+    (2500, 1900, 450), # Wehrseifen entrance
+    (2700, 1600, 395), # Wehrseifen (steep downhill hairpin)
+    (2900, 1500, 320), # Breidscheid (lowest bridge, lowest altitude)
+    (3100, 1700, 345), # Ex-Mühle (steep climb out of the valley)
+    (3300, 1800, 375), # Lauda Link
+    (3500, 1700, 360), # Bergwerk (critical right corner)
+    (3700, 1900, 390), # Kesselchen long climb
+    (3800, 2200, 435), # Kesselchen
+    (4000, 2400, 480), # Mutkurve
+    (4200, 2600, 505), # Mutkurve exit
+    (4450, 3000, 530), # Klostertal
+    (4250, 3400, 555), # Steilstrecke
+    (4100, 3600, 570), # Karussell (banked concrete carousel)
+    (4300, 3800, 592), # Hohe Acht climb
+    (4500, 3950, 620), # Hohe Acht (highest altitude point)
+    (4700, 3900, 600), # Hedwigshöhe
+    (4900, 4000, 585), # Wippermann
+    (5100, 4200, 555), # Eschbach
+    (5300, 4400, 530), # Brünnchen (famous spectator spot)
+    (5200, 4700, 510), # Pflanzgarten
+    (5000, 4900, 495), # Pflanzgarten 2 jump
+    (4700, 5100, 515), # Schwalbenschwanz
+    (4400, 5300, 535), # Kleines Karussell
+    (4100, 5200, 555), # Galgenkopf (sweeping right turn)
+    (3000, 5000, 580), # Döttinger Höhe (ultra-long straightaway)
+    (2000, 4800, 600), # Döttinger Höhe (second half)
+    (1400, 4700, 615), # Antoniusbuche / Tiergarten
+    (1150, 4600, 620), # Hohenrain chicane
+]
+
+# 2. Catmull-Rom Spline Interpolation for organic tracking
+def catmull_rom(p0, p1, p2, p3, t):
+    t2 = t * t
+    t3 = t2 * t
+    
+    x0, y0, z0 = p0
+    x1, y1, z1 = p1
+    x2, y2, z2 = p2
+    x3, y3, z3 = p3
+    
+    rx = 0.5 * ((2 * x1) + (-x0 + x2) * t + (2 * x0 - 5 * x1 + 4 * x2 - x3) * t2 + (-x0 + 3 * x1 - 3 * x2 + x3) * t3)
+    ry = 0.5 * ((2 * y1) + (-y0 + y2) * t + (2 * y0 - 5 * y1 + 4 * y2 - y3) * t2 + (-y0 + 3 * y1 - 3 * y2 + y3) * t3)
+    rz = 0.5 * ((2 * z1) + (-z0 + z2) * t + (2 * z0 - 5 * z1 + 4 * z2 - z3) * t2 + (-z0 + 3 * z1 - 3 * z2 + z3) * t3)
+    
+    return rx, ry, rz
+
+def generate_track_points(ctrls, segments=50):
+    points = []
+    n = len(ctrls)
+    for i in range(n):
+        p0 = ctrls[(i - 1) % n]
+        p1 = ctrls[i]
+        p2 = ctrls[(i + 1) % n]
+        p3 = ctrls[(i + 2) % n]
+        
+        for j in range(segments):
+            t = j / segments
+            points.append(catmull_rom(p0, p1, p2, p3, t))
+    return points
+
+# Compile 2100 spline points
+track_points = generate_track_points(control_points, 50)
+total_pts = len(track_points)
+
+# 3. Local Scenery (Trees) Placement
+def generate_trees(points):
+    tree_list = []
+    # Place trees every 5th track point to save performance
+    for i in range(0, len(points), 5):
+        p = points[i]
+        p_next = points[(i + 1) % len(points)]
+        
+        # Calculate perpendicular vector
+        tangent_angle = math.atan2(p_next[1] - p[1], p_next[0] - p[0])
+        perp_angle = tangent_angle + math.pi / 2
+        
+        # Left and right placement
+        for side in [-1, 1]:
+            # Distance from centerline (outside the track surface width 120px)
+            dist = random.uniform(140, 260)
+            tx = p[0] + math.cos(perp_angle) * side * dist
+            ty = p[1] + math.sin(perp_angle) * side * dist
+            
+            size = random.uniform(12, 22)
+            # Alternate shades of deep forest green
+            color = random.choice(["#0e2a0f", "#081d09", "#113813", "#1b4d1b"])
+            tree_list.append((tx, ty, size, color))
+    return tree_list
+
+scenery_trees = generate_trees(track_points)
+
+# 4. Player Vehicle Physics State variables
+car_x = track_points[0][0]
+car_y = track_points[0][1]
+car_vx = 0.0
+car_vy = 0.0
+car_speed = 0.0
+car_angle = 0.0
+car_steer_val = 0.0
+
+# Initialise car angle facing the direction of the first turn segment
+p_start = track_points[0]
+p_next = track_points[1]
+car_angle = math.atan2(p_next[1] - p_start[1], p_next[0] - p_start[0])
+
+# Physics constants (Scale: 1 pixel = 0.075m, car width 32px/2.4m, track width 120px/9m)
+ACCEL_ON_ROAD = 480.0     # px/s^2 (~36 m/s^2)
+ACCEL_OFF_ROAD = 110.0
+MAX_SPEED_ON_ROAD = 1250.0  # px/s (~340 km/h)
+MAX_SPEED_OFF_ROAD = 150.0  # px/s (~40 km/h)
+BRAKE_FORCE = 850.0
+REVERSE_MAX = -120.0
+REVERSE_ACCEL = 180.0
+COAST_DRAG = 0.4
+LATERAL_GRIP_ON_ROAD = 11.5
+LATERAL_GRIP_OFF_ROAD = 1.6
+LATERAL_GRIP_CURBS = 5.5
+
+# Game telemetries & timing
+last_closest_idx = 0
+passed_halfway = False
+lap_start_time = None
+best_lap_time = None
+last_lap_time = None
+
+# HUD updates variables
+is_offroad = False
+is_on_curb = False
+current_slope = 0.0
+current_altitude = 620.0
+
+# 5. Keyboard Listener states
+keys = {}
+
+def on_keydown(event):
+    keys[event.key] = True
+    # Prevent browser page scroll when driving
+    if event.key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "]:
+        event.preventDefault()
+    
+    # Instant key releases for triggers
+    if event.key in ["r", "R"]:
+        reset_car()
+    if event.key in ["c", "C"]:
+        window.toggleCameraView()
+
+def on_keyup(event):
+    keys[event.key] = False
+    if event.key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "]:
+        event.preventDefault()
+
+# Bind listeners to the window
+keydown_proxy = create_proxy(on_keydown)
+keyup_proxy = create_proxy(on_keyup)
+window.addEventListener("keydown", keydown_proxy)
+window.addEventListener("keyup", keyup_proxy)
+
+# Reset car to starting line
+def reset_car():
+    global car_x, car_y, car_vx, car_vy, car_speed, car_angle, car_steer_val
+    global last_closest_idx, passed_halfway, lap_start_time, is_offroad, is_on_curb
+    
+    car_x = track_points[0][0]
+    car_y = track_points[0][1]
+    car_vx = 0.0
+    car_vy = 0.0
+    car_speed = 0.0
+    car_steer_val = 0.0
+    
+    p_s = track_points[0]
+    p_n = track_points[1]
+    car_angle = math.atan2(p_n[1] - p_s[1], p_n[0] - p_s[0])
+    
+    last_closest_idx = 0
+    passed_halfway = False
+    lap_start_time = None
+    is_offroad = False
+    is_on_curb = False
+    
+    document.getElementById("green-hell-warning").style.display = "none"
+    document.getElementById("notification-banner").style.display = "none"
+    document.getElementById("checkpoint-indicator").innerText = "🏁 SPAWN"
+    document.getElementById("checkpoint-indicator").style.color = "#9ca3af"
+
+# 6. Local database for Best Times
+def load_rankings():
+    import json
+    data_str = localStorage.getItem("nyurukita_rankings")
+    if data_str:
+        try:
+            return json.loads(data_str)
+        except Exception:
+            return []
+    return []
+
+def save_ranking(sec):
+    import json
+    rankings = load_rankings()
+    rankings.append(sec)
+    rankings.sort()
+    rankings = rankings[:5]
+    localStorage.setItem("nyurukita_rankings", json.dumps(rankings))
+    window.displayLeaderboard(rankings)
+    
+    # Update Best Lap display
+    best_time = rankings[0]
+    document.getElementById("best-lap-val").innerText = format_time(best_time)
+
+# Reset rankings callback from JS
+def reset_rankings_cb():
+    global best_lap_time
+    best_lap_time = None
+    document.getElementById("best-lap-val").innerText = "--:--.---"
+
+reset_rankings_proxy = create_proxy(reset_rankings_cb)
+window.pythonResetRankings = reset_rankings_proxy
+
+# 7. Optimized Distance Lookup ($O(1)$ search around last index)
+def find_closest_track_point(cx, cy, pts, prev_idx):
+    n = len(pts)
+    min_dist_sq = float('inf')
+    best_idx = prev_idx
+    
+    # Search locally within 80 index units (roughly 500m of track)
+    for i in range(prev_idx - 40, prev_idx + 41):
+        idx = i % n
+        tx, ty, tz = pts[idx]
+        dist_sq = (cx - tx)**2 + (cy - ty)**2
+        if dist_sq < min_dist_sq:
+            min_dist_sq = dist_sq
+            best_idx = idx
+            
+    # Fallback to scan entire loop if car got way off track
+    if min_dist_sq > 600**2:
+        min_dist_sq = float('inf')
+        for idx in range(n):
+            tx, ty, tz = pts[idx]
+            dist_sq = (cx - tx)**2 + (cy - ty)**2
+            if dist_sq < min_dist_sq:
+                min_dist_sq = dist_sq
+                best_idx = idx
+                
+    return best_idx, math.sqrt(min_dist_sq)
+
+# Time string formatter MM:SS.mmm
+def format_time(seconds):
+    if seconds is None or seconds <= 0:
+        return "--:--.---"
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    millis = int((seconds % 1) * 1000)
+    return f"{minutes:02d}:{secs:02d}.{millis:03d}"
+
+# Notification popups
+notification_timeout = 0.0
+
+def show_notification(text, bg_color):
+    global notification_timeout
+    banner = document.getElementById("notification-banner")
+    banner.innerText = text
+    banner.style.background = bg_color
+    banner.style.display = "block"
+    notification_timeout = 3.0 # display for 3.0 seconds
+
+# 8. Main Game Loop Updates (Physics + Telemetry Updates)
+def update_physics(dt):
+    global car_x, car_y, car_vx, car_vy, car_speed, car_angle, car_steer_val
+    global last_closest_idx, passed_halfway, lap_start_time, last_lap_time, best_lap_time
+    global is_offroad, is_on_curb, current_slope, current_altitude, notification_timeout
+    
+    # Handle notification countdown
+    if notification_timeout > 0:
+        notification_timeout -= dt
+        if notification_timeout <= 0:
+            document.getElementById("notification-banner").style.display = "none"
+            
+    # Key inputs mapping
+    steer_input = 0.0
+    if keys.get("ArrowLeft") or keys.get("a") or keys.get("A"):
+        steer_input = -1.0
+    if keys.get("ArrowRight") or keys.get("d") or keys.get("D"):
+        steer_input = 1.0
+        
+    throttle_input = 0.0
+    brake_input = False
+    if keys.get("ArrowUp") or keys.get("w") or keys.get("W"):
+        throttle_input = 1.0
+    if keys.get("ArrowDown") or keys.get("s") or keys.get("S"):
+        brake_input = True
+        
+    handbrake = keys.get(" ") or False
+    
+    # Update closest track matching
+    last_closest_idx, dist = find_closest_track_point(car_x, car_y, track_points, last_closest_idx)
+    
+    # Curb/Offroad Boundaries evaluation
+    if dist > 70.0:
+        is_offroad = True
+        is_on_curb = False
+        document.getElementById("green-hell-warning").style.display = "block"
+    elif dist > 60.0:
+        is_offroad = False
+        is_on_curb = True
+        document.getElementById("green-hell-warning").style.display = "none"
+    else:
+        is_offroad = False
+        is_on_curb = False
+        document.getElementById("green-hell-warning").style.display = "none"
+        
+    # Get current elevation
+    current_altitude = track_points[last_closest_idx][2]
+    
+    # Calculate gradient (slope %) by looking slightly ahead on spline
+    p_c = track_points[last_closest_idx]
+    p_n = track_points[(last_closest_idx + 12) % total_pts]
+    dz = p_n[2] - p_c[2]
+    dx = p_n[0] - p_c[0]
+    dy = p_n[1] - p_c[1]
+    dist_2d = math.sqrt(dx*dx + dy*dy)
+    if dist_2d > 0:
+        current_slope = (dz / (dist_2d * 0.075)) * 100.0
+    else:
+        current_slope = 0.0
+        
+    # Physical settings mapping per surface type
+    if is_offroad:
+        max_speed = MAX_SPEED_OFF_ROAD
+        accel = ACCEL_OFF_ROAD
+        grip = LATERAL_GRIP_OFF_ROAD
+    elif is_on_curb:
+        max_speed = MAX_SPEED_ON_ROAD
+        accel = ACCEL_ON_ROAD
+        grip = LATERAL_GRIP_CURBS
+    else:
+        max_speed = MAX_SPEED_ON_ROAD
+        accel = ACCEL_ON_ROAD
+        grip = LATERAL_GRIP_ON_ROAD
+        
+    if handbrake:
+        grip *= 0.22 # Slide easily when pulling the handbrake
+        
+    # Convert velocity to car local space (Forward / Side slip)
+    h_x = math.cos(car_angle)
+    h_y = math.sin(car_angle)
+    r_x = -h_y
+    r_y = h_x
+    
+    fwd_speed = car_vx * h_x + car_vy * h_y
+    lat_speed = car_vx * r_x + car_vy * r_y
+    
+    # Dynamic steer responsiveness (low turn radius at extreme speeds)
+    turn_limit = min(1.0, abs(fwd_speed) / 90.0) # cannot steer while static
+    if abs(fwd_speed) > 420.0:
+        turn_limit *= 420.0 / abs(fwd_speed)
+        
+    # Smoothen keyboard inputs to steer wheel
+    car_steer_val += (steer_input - car_steer_val) * 10.0 * dt
+    car_angle += car_steer_val * 2.8 * turn_limit * dt
+    
+    # Throttle / Braking power transfer
+    if throttle_input > 0:
+        if fwd_speed < max_speed:
+            fwd_speed += throttle_input * accel * dt
+    elif brake_input:
+        if fwd_speed > 0:
+            fwd_speed -= BRAKE_FORCE * dt
+            if fwd_speed < 1.0:
+                fwd_speed = -1.0 # switch to reverse
+        else:
+            # Reversing
+            if fwd_speed > REVERSE_MAX:
+                fwd_speed -= REVERSE_ACCEL * dt
+    else:
+        # Drag resistance
+        fwd_speed -= fwd_speed * COAST_DRAG * dt
+        
+    # Apply aerodynamic drag linear/quadratic
+    fwd_speed -= fwd_speed * 0.05 * dt
+    if fwd_speed > 0:
+        fwd_speed -= (fwd_speed**2) * 0.00015 * dt
+        
+    # Slope (Gravity drag) effect: downhill accelerates, uphill slows
+    slope_angle = math.atan(current_slope / 100.0)
+    gravity_drag = - (9.81 * math.sin(slope_angle)) / 0.075 * 0.55
+    fwd_speed += gravity_drag * dt
+    
+    # Slide physics: decay lateral slip according to current surface grip
+    decay = grip * dt
+    if decay > 1.0:
+        decay = 1.0
+    lat_speed -= lat_speed * decay
+    
+    # Reassemble velocity vector back to global workspace axes
+    car_vx = fwd_speed * h_x + r_x * lat_speed
+    car_vy = fwd_speed * h_y + r_y * lat_speed
+    
+    # Update coordinates position
+    car_x += car_vx * dt
+    car_y += car_vy * dt
+    car_speed = fwd_speed
+    
+    # 9. Time Attack Checker and Checkpoint flags
+    current_time = time.time()
+    
+    # Checkpoints to prevent shortcut cheating (N = 2100)
+    # Checkpoint 1 (Approx 50% - Wehrseifen/Breidscheid)
+    if 980 < last_closest_idx < 1120:
+        if not passed_halfway:
+            passed_halfway = True
+            document.getElementById("checkpoint-indicator").innerText = "🏁 SECTOR 1"
+            document.getElementById("checkpoint-indicator").style.color = "#fbbf24"
+            
+    # Checkpoint 2 (Start/Finish crossing)
+    # High index to Low index transitions
+    # If starting moving initially, initialize timer
+    if lap_start_time is None and (abs(car_vx) > 8.0 or abs(car_vy) > 8.0):
+        lap_start_time = current_time
+        document.getElementById("checkpoint-indicator").innerText = "🟢 GO!"
+        document.getElementById("checkpoint-indicator").style.color = var_primary_color
+        
+    # Transition threshold logic
+    # If close to finish line and cross it
+    if last_closest_idx < 80 and passed_halfway:
+        # Lap complete!
+        lap_duration = current_time - lap_start_time
+        last_lap_time = lap_duration
+        
+        # Save time
+        save_ranking(lap_duration)
+        
+        # Display logs
+        document.getElementById("last-lap-val").innerText = format_time(lap_duration)
+        
+        # Reset lap states
+        lap_start_time = current_time
+        passed_halfway = False
+        document.getElementById("checkpoint-indicator").innerText = "🟢 GO!"
+        
+        # Flashes record/lap alerts
+        rankings = load_rankings()
+        if len(rankings) > 0 and lap_duration <= rankings[0]:
+            show_notification("NEW RECORD!", "rgba(251, 191, 36, 0.95)")
+        else:
+            show_notification("LAP COMPLETE!", "rgba(74, 222, 128, 0.95)")
+
+# Cache theme colors safely
+var_primary_color = "#4ade80"
+
+# 10. Dashboard DOM Updates (automated gears transmission + audio sync)
+def update_hud():
+    global car_speed, car_vx, car_vy, is_offroad, current_slope, current_altitude, last_closest_idx
+    
+    # Speed (km/h)
+    speed_kmh = int(abs(car_speed) * 0.27)
+    document.getElementById("speed-val").innerText = str(speed_kmh)
+    
+    # Automated gear shifts simulation
+    speed_abs = abs(car_speed)
+    if speed_abs < 180:
+        gear = 1
+        min_sp, max_sp = 0, 200
+    elif speed_abs < 380:
+        gear = 2
+        min_sp, max_sp = 160, 400
+    elif speed_abs < 580:
+        gear = 3
+        min_sp, max_sp = 340, 600
+    elif speed_abs < 780:
+        gear = 4
+        min_sp, max_sp = 540, 800
+    elif speed_abs < 980:
+        gear = 5
+        min_sp, max_sp = 740, 1000
+    else:
+        gear = 6
+        min_sp, max_sp = 940, 1300
+        
+    # Display Gear
+    if car_speed < -5.0:
+        document.getElementById("gear-val").innerText = "R"
+    elif speed_abs < 5.0:
+        document.getElementById("gear-val").innerText = "N"
+    else:
+        document.getElementById("gear-val").innerText = str(gear)
+        
+    # Simulated Engine RPM (1000 - 8000 range)
+    if speed_abs < 5.0:
+        rpm = 1000.0 + random.uniform(0, 100) # idle vibration
+    elif car_speed < 0:
+        # Reverse revs
+        rpm = 1000.0 + (speed_abs / 120.0) * 4500.0
+    elif gear == 1:
+        rpm = 1000.0 + (speed_abs / 200.0) * 7000.0
+    else:
+        rpm = 3200.0 + ((speed_abs - min_sp) / (max_sp - min_sp)) * 4800.0
+        
+    rpm = max(1000.0, min(8000.0, rpm))
+    
+    # Update RPM visual bar
+    rpm_pct = (rpm / 8000.0) * 100.0
+    rpm_fill = document.getElementById("rpm-fill")
+    rpm_fill.style.width = f"{rpm_pct}%"
+    
+    if rpm > 7400:
+        rpm_fill.classList.add("redline")
+    else:
+        rpm_fill.classList.remove("redline")
+        
+    # Update Altitude and Gradient slope
+    document.getElementById("altitude-val").innerText = f"{int(current_altitude)} m"
+    
+    slope_node = document.getElementById("slope-val")
+    s_val = abs(int(current_slope))
+    if current_slope > 1.5:
+        slope_node.innerText = f"+{s_val}% Uphill"
+        slope_node.style.color = "#f87171" # red
+    elif current_slope < -1.5:
+        slope_node.style.color = "#4ade80" # green
+        # Visual jumps check at Pflanzgarten 2
+        if 1680 < last_closest_idx < 1720 and speed_abs > 600.0:
+            slope_node.innerText = "JUMP!"
+            slope_node.style.color = "#fbbf24"
+        else:
+            slope_node.innerText = f"-{s_val}% Downhill"
+    else:
+        slope_node.innerText = "0% Flat"
+        slope_node.style.color = "#9ca3af"
+        
+    # Steer wheel dynamic HUD rotation
+    document.getElementById("hud-wheel").style.transform = f"rotate({car_steer_val * 70}deg)"
+    
+    # Timing calculations
+    if lap_start_time is not None:
+        curr_seconds = time.time() - lap_start_time
+        document.getElementById("lap-val").innerText = format_time(curr_seconds)
+    else:
+        document.getElementById("lap-val").innerText = "00:00.000"
+        
+    # Update audio synthesis parameters (JS side)
+    # Check tire screeching condition (high lateral velocity slide on tarmac)
+    h_x = math.cos(car_angle)
+    h_y = math.sin(car_angle)
+    r_x = -h_y
+    r_y = h_x
+    lat_speed = car_vx * r_x + car_vy * r_y
+    is_screeching = abs(lat_speed) > 130.0 and abs(car_speed) > 120.0 and not is_offroad
+    
+    # Map accelerator throttle load
+    throttle_load = 0.0
+    if keys.get("ArrowUp") or keys.get("w") or keys.get("W"):
+        throttle_load = 1.0
+        
+    window.soundManager.update(rpm, throttle_load, is_offroad, is_screeching)
+
+# 11. Canvas Drawing Engine (Chase Camera zoom/rotation)
+canvas = document.getElementById("gameCanvas")
+ctx = canvas.getContext("2d")
+
+minimap = document.getElementById("minimapCanvas")
+m_ctx = minimap.getContext("2d")
+
+# Draw whole track profile to the minimap SVG initially
+def init_elevation_svg():
+    svg_pts = []
+    n = len(control_points)
+    # altitude matches between 320m (y=45) and 620m (y=8)
+    for idx, cp in enumerate(control_points):
+        x = (idx / n) * 250
+        z = cp[2]
+        y = 45 - ((z - 320.0) / 300.0) * 35
+        svg_pts.append(f"{x},{y}")
+        
+    # Connect loop end
+    z_end = control_points[0][2]
+    y_end = 45 - ((z_end - 320.0) / 300.0) * 35
+    svg_pts.append(f"250,{y_end}")
+    
+    path_str = "M " + " L ".join(svg_pts)
+    document.getElementById("elevation-path").setAttribute("d", path_str)
+
+# Resize main canvas dynamically
+def resize_canvas(event=None):
+    rect = canvas.parentElement.getBoundingClientRect()
+    canvas.width = rect.width
+    canvas.height = rect.height
+
+resize_proxy = create_proxy(resize_canvas)
+window.addEventListener("resize", resize_proxy)
+resize_canvas()
+init_elevation_svg()
+
+# Render Track Minimap sidebar canvas
+def render_minimap():
+    m_ctx.clearRect(0, 0, 180, 180)
+    
+    # Track boundaries bounds (X in [900, 5400], Y in [1400, 5400])
+    # Map points to fit in 180x180 box
+    sc = min(160.0 / 4500.0, 160.0 / 4000.0)
+    
+    def map_xy(tx, ty):
+        mx = 10 + (tx - 900) * sc
+        my = 10 + (ty - 1400) * sc
+        return mx, my
+        
+    # Draw green track shape
+    m_ctx.strokeStyle = "rgba(74, 222, 128, 0.45)"
+    m_ctx.lineWidth = 3
+    m_ctx.beginPath()
+    sx, sy = map_xy(track_points[0][0], track_points[0][1])
+    m_ctx.moveTo(sx, sy)
+    for i in range(1, total_pts):
+        tx, ty = track_points[i][0], track_points[i][1]
+        mx, my = map_xy(tx, ty)
+        m_ctx.lineTo(mx, my)
+    m_ctx.closePath()
+    m_ctx.stroke()
+    
+    # Draw Start-Finish Grid Marker
+    m_ctx.fillStyle = "#fbbf24"
+    m_ctx.beginPath()
+    m_ctx.arc(sx, sy, 4, 0, 2*math.pi)
+    m_ctx.fill()
+    
+    # Draw Player position Red indicator dot
+    cmx, cmy = map_xy(car_x, car_y)
+    m_ctx.fillStyle = "#ef4444"
+    m_ctx.beginPath()
+    m_ctx.arc(cmx, cmy, 5, 0, 2*math.pi)
+    m_ctx.fill()
+    
+    # Glow ring
+    m_ctx.strokeStyle = "#ffffff"
+    m_ctx.lineWidth = 1
+    m_ctx.beginPath()
+    m_ctx.arc(cmx, cmy, 7, 0, 2*math.pi)
+    m_ctx.stroke()
+
+# Draw GT Car Details
+def draw_player_car(ctx_p):
+    ctx_p.save()
+    ctx_p.translate(car_x, car_y)
+    ctx_p.rotate(car_angle)
+    
+    # Coordinate orientation: front of car is facing +X (to the right)
+    # Dimensions: 60px length, 32px width
+    
+    # 1. Headlight Cones (drawn underneath chassis)
+    beam_length = 260
+    beam_w = 90
+    
+    # Left light cone
+    grad_l = ctx_p.createRadialGradient(25, -9, 3, 25+beam_length, -9, beam_w)
+    grad_l.addColorStop(0, "rgba(255, 255, 220, 0.45)")
+    grad_l.addColorStop(1, "rgba(255, 255, 220, 0.0)")
+    ctx_p.fillStyle = grad_l
+    ctx_p.beginPath()
+    ctx_p.moveTo(25, -9)
+    ctx_p.lineTo(25 + beam_length, -9 - beam_w)
+    ctx_p.lineTo(25 + beam_length, -9 + beam_w)
+    ctx_p.closePath()
+    ctx_p.fill()
+    
+    # Right light cone
+    grad_r = ctx_p.createRadialGradient(25, 9, 3, 25+beam_length, 9, beam_w)
+    grad_r.addColorStop(0, "rgba(255, 255, 220, 0.45)")
+    grad_r.addColorStop(1, "rgba(255, 255, 220, 0.0)")
+    ctx_p.fillStyle = grad_r
+    ctx_p.beginPath()
+    ctx_p.moveTo(25, 9)
+    ctx_p.lineTo(25 + beam_length, 9 - beam_w)
+    ctx_p.lineTo(25 + beam_length, 9 + beam_w)
+    ctx_p.closePath()
+    ctx_p.fill()
+    
+    # 2. Car Shadows
+    ctx_p.fillStyle = "rgba(0, 0, 0, 0.35)"
+    ctx_p.fillRect(-28, -15, 56, 30)
+    
+    # 3. Four Wheels
+    ctx_p.fillStyle = "#141414"
+    ctx_p.fillRect(10, -18, 12, 5)   # FL
+    ctx_p.fillRect(10, 13, 12, 5)    # FR
+    ctx_p.fillRect(-22, -18, 12, 5)  # RL
+    ctx_p.fillRect(-22, 13, 12, 5)   # RR
+    
+    # 4. Aerodynamic Chassis Body
+    # Linear metallic red color gradient
+    body_grad = ctx_p.createLinearGradient(-30, 0, 30, 0)
+    body_grad.addColorStop(0, "#be123c") # deep rose red
+    body_grad.addColorStop(0.5, "#e11d48") # metallic red
+    body_grad.addColorStop(1, "#f43f5e") # hot bright red
+    
+    ctx_p.fillStyle = body_grad
+    ctx_p.beginPath()
+    # Front Nose
+    ctx_p.moveTo(30, 0)
+    ctx_p.quadraticCurveTo(26, 12, 16, 12)
+    # Side archs
+    ctx_p.lineTo(-18, 12)
+    ctx_p.quadraticCurveTo(-26, 12, -30, 6)
+    # Rear tail
+    ctx_p.lineTo(-30, -6)
+    ctx_p.quadraticCurveTo(-26, -12, -18, -12)
+    ctx_p.lineTo(16, -12)
+    ctx_p.quadraticCurveTo(26, -12, 30, 0)
+    ctx_p.closePath()
+    ctx_p.fill()
+    
+    # Outline borders
+    ctx_p.strokeStyle = "#881337"
+    ctx_p.lineWidth = 1.5
+    ctx_p.stroke()
+    
+    # 5. Carbon Fiber GT Wing
+    # Left/Right mounts
+    ctx_p.fillStyle = "#0a0a0a"
+    ctx_p.fillRect(-28, -15, 3, 2)
+    ctx_p.fillRect(-28, 13, 3, 2)
+    # Wing foil
+    ctx_p.fillRect(-31, -14, 5, 28)
+    
+    # 6. Blue Tinted Cockpit Windshield
+    ctx_p.fillStyle = "rgba(14, 165, 233, 0.45)"
+    ctx_p.strokeStyle = "#0284c7"
+    ctx_p.lineWidth = 1
+    ctx_p.beginPath()
+    ctx_p.arc(-3, 0, 8, 0, 2*math.pi)
+    ctx_p.fill()
+    ctx_p.stroke()
+    
+    # Glass shine accent
+    ctx_p.fillStyle = "rgba(255, 255, 255, 0.4)"
+    ctx_p.beginPath()
+    ctx_p.arc(-5, -3, 3, 0, 2*math.pi)
+    ctx_p.fill()
+    
+    # 7. Headlight Bulbs
+    ctx_p.fillStyle = "#fffff0"
+    ctx_p.beginPath()
+    ctx_p.arc(28, -9, 2.5, 0, 2*math.pi)
+    ctx_p.arc(28, 9, 2.5, 0, 2*math.pi)
+    ctx_p.fill()
+    
+    # 8. LED Brake Taillights
+    # Glow intense pink when active
+    is_braking_active = keys.get("ArrowDown") or keys.get("s") or keys.get("S")
+    if is_braking_active:
+        ctx_p.fillStyle = "#fda4af"
+        ctx_p.shadowColor = "#f43f5e"
+        ctx_p.shadowBlur = 8
+    else:
+        ctx_p.fillStyle = "#9f1239"
+        ctx_p.shadowBlur = 0
+        
+    ctx_p.fillRect(-30, -9, 2.5, 3)
+    ctx_p.fillRect(-30, 6, 2.5, 3)
+    ctx_p.shadowBlur = 0 # reset shadow states
+    
+    ctx_p.restore()
+
+# Renders everything on the main display Canvas
+def draw_scene():
+    w = canvas.width
+    h = canvas.height
+    
+    # Clear background (Forest green terrain grass)
+    ctx.fillStyle = "#14320f"
+    ctx.fillRect(0, 0, w, h)
+    
+    ctx.save()
+    
+    # Center camera on player car
+    ctx.translate(w / 2, h / 2)
+    
+    # Dynamic camera zoom factor (Wide out at high speeds to see further)
+    speed_ratio = min(1.0, abs(car_speed) / MAX_SPEED_ON_ROAD)
+    zoom = 1.25 - speed_ratio * 0.35
+    ctx.scale(zoom, zoom)
+    
+    # Chase camera view orientations (rotate world around player if activated)
+    if _camera_mode == "CAR_UP":
+        ctx.rotate(-car_angle - math.pi / 2)
+        
+    # Camera shaker on rough terrains (curbs or off-road)
+    shake_x, shake_y = 0.0, 0.0
+    if abs(car_speed) > 40.0:
+        if is_offroad:
+            shake_x = random.uniform(-4, 4) * (abs(car_speed) / MAX_SPEED_ON_ROAD)
+            shake_y = random.uniform(-4, 4) * (abs(car_speed) / MAX_SPEED_ON_ROAD)
+        elif is_on_curb:
+            shake_x = random.uniform(-2, 2) * (abs(car_speed) / MAX_SPEED_ON_ROAD)
+            shake_y = random.uniform(-2, 2) * (abs(car_speed) / MAX_SPEED_ON_ROAD)
+            
+    # Apply camera translations
+    ctx.translate(-car_x + shake_x, -car_y + shake_y)
+    
+    # 1. Racetrack drawing using compiled JS Path2D (avoiding massive loop bridge delays)
+    if _track_path is not None:
+        # Red curbs layer base outline
+        ctx.strokeStyle = "#e11d48" # Red
+        ctx.lineWidth = 142
+        ctx.setLineDash([])
+        ctx.stroke(_track_path)
+        
+        # White curbs overlay dashed pattern
+        ctx.strokeStyle = "#ffffff" # White
+        ctx.lineWidth = 142
+        ctx.setLineDash([25, 25])
+        ctx.stroke(_track_path)
+        
+        # Dark grey main asphalt surface
+        ctx.strokeStyle = "#27272a"
+        ctx.lineWidth = 120
+        ctx.setLineDash([])
+        ctx.stroke(_track_path)
+        
+        # Grid centerline (Dashed white line)
+        ctx.strokeStyle = "#a1a1aa"
+        ctx.lineWidth = 2
+        ctx.setLineDash([15, 20])
+        ctx.stroke(_track_path)
+        
+    # 2. Checkered Start / Finish Line drawing
+    p_start = track_points[0]
+    p_nxt = track_points[1]
+    seg_ang = math.atan2(p_nxt[1] - p_start[1], p_nxt[0] - p_start[0])
+    perp_ang = seg_ang + math.pi / 2
+    
+    ctx.save()
+    ctx.translate(p_start[0], p_start[1])
+    ctx.rotate(perp_ang)
+    
+    w_road = 60.0
+    grid_h = 14.0
+    box_size = 10.0
+    
+    # Base grid plate
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(-w_road, -grid_h/2, w_road*2, grid_h)
+    
+    # Black checker boxes
+    ctx.fillStyle = "#000000"
+    for cx in range(int(-w_road), int(w_road), int(box_size * 2)):
+        ctx.fillRect(cx, -grid_h/2, box_size, grid_h/2)
+        ctx.fillRect(cx + box_size, 0, box_size, grid_h/2)
+        
+    ctx.restore()
+    
+    # 3. Dynamic trees drawing (draw only visible ones close to the camera for speed)
+    for tx, ty, t_sz, t_col in scenery_trees:
+        dx = tx - car_x
+        dy = ty - car_y
+        if dx*dx + dy*dy < 800**2: # only within visible boundary circle radius 800px
+            # Trunk
+            ctx.fillStyle = "#451a03"
+            ctx.fillRect(tx - 3, ty + t_sz*0.6, 6, t_sz*0.6)
+            
+            # Leaf layers (Canopy)
+            ctx.fillStyle = t_col
+            ctx.beginPath()
+            ctx.arc(tx, ty, t_sz, 0, 2*math.pi)
+            ctx.fill()
+            
+            # Shading shadow effect
+            ctx.fillStyle = "rgba(0,0,0,0.12)"
+            ctx.beginPath()
+            ctx.arc(tx + t_sz*0.15, ty + t_sz*0.15, t_sz*0.85, 0, 2*math.pi)
+            ctx.fill()
+            
+    # 4. Player Vehicle
+    draw_player_car(ctx)
+    
+    ctx.restore()
+
+# 12. Orchestrator Loop Initialization
+last_frame_time = None
+_game_started = False  # Python-side flag, set via JS callback
+_camera_mode = "CAR_UP"  # Python-side camera mode, set via JS callback
+_track_path = None       # Python-side Path2D reference, set via JS callback
+
+def _set_game_started(val):
+    global _game_started
+    _game_started = bool(val)
+
+def _set_camera_mode(mode):
+    global _camera_mode
+    _camera_mode = str(mode)
+
+def _set_track_path(path):
+    global _track_path
+    _track_path = path
+
+_set_game_started_proxy = create_proxy(_set_game_started)
+_set_camera_mode_proxy = create_proxy(_set_camera_mode)
+_set_track_path_proxy = create_proxy(_set_track_path)
+window.pySetGameStarted = _set_game_started_proxy
+window.pySetCameraMode = _set_camera_mode_proxy
+window.pySetTrackPath = _set_track_path_proxy
+
+def main_loop(timestamp):
+    global last_frame_time
+    
+    # Skip updates if game hasn't started yet (use Python-side flag to avoid JS bridge AttributeError)
+    if not _game_started:
+        window.requestAnimationFrame(main_proxy)
+        return
+        
+    # Calculate dt (in seconds)
+    if last_frame_time is None:
+        last_frame_time = timestamp
+        
+    dt = (timestamp - last_frame_time) / 1000.0
+    last_frame_time = timestamp
+    
+    # Bound DT to avoid physics jumps on heavy stutter
+    if dt > 0.1:
+        dt = 0.1
+    elif dt <= 0.0:
+        dt = 0.016
+        
+    # Run loop routines
+    update_physics(dt)
+    draw_scene()
+    update_hud()
+    render_minimap()
+    
+    # Update elevation indicator path
+    update_elevation_marker()
+    
+    # Loop request
+    window.requestAnimationFrame(main_proxy)
+
+# Interactive Elevation Indicator dot placement updater
+def update_elevation_marker():
+    marker = document.getElementById("elevation-marker")
+    if marker:
+        mx = (last_closest_idx / total_pts) * 250.0
+        z = track_points[last_closest_idx][2]
+        my = 45 - ((z - 320.0) / 300.0) * 35
+        marker.setAttribute("cx", str(mx))
+        marker.setAttribute("cy", str(my))
+
+# Startup initialization routines called after PyScript is compiled
+def startup():
+    # Hide load screen and prompt user
+    document.getElementById("loading-screen").style.display = "none"
+    document.getElementById("start-screen").style.display = "flex"
+    
+    # Send spline track arrays to JS for Path2D build
+    js_pts = [[p[0], p[1]] for p in track_points]
+    window.createTrackPath(js_pts)
+    
+    # Load rankings
+    ranks = load_rankings()
+    window.displayLeaderboard(ranks)
+    if len(ranks) > 0:
+        document.getElementById("best-lap-val").innerText = format_time(ranks[0])
+
+# Start Animation Frame proxy
+main_proxy = create_proxy(main_loop)
+startup()
+window.requestAnimationFrame(main_proxy)
+</script>
+
+</body>
+</html>
