@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	// Playlist: [Video ID, Playback Duration (s), Start Time (s)]
 	const playlist = [
